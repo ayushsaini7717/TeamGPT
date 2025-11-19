@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import multer from "multer";
 import { processDocument } from "./lib/ingest.js";
+import { chatWithDocument } from "./lib/chat.js";
 dotenv.config();
 
 const app = express();
@@ -37,6 +38,36 @@ app.post("/api/ingest", upload.single("file"), async (req, res) : Promise<any> =
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+
+app.post("/api/chat", async (req, res) : Promise<any> => {
+  try {
+    const { message, workspaceId, history } = req.body;
+
+    if (!message || !workspaceId) {
+      return res.status(400).json({ error: "Missing message or workspaceId" });
+    }
+
+    console.log(`Chatting in workspace: ${workspaceId}`);
+    
+    const stream = await chatWithDocument(message, workspaceId, history || []);
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
+    for await (const chunk of stream) {
+      res.write(`data: ${JSON.stringify({ token: chunk })}\n\n`);
+    }
+
+    res.end();
+
+  } catch (error) {
+    console.error("Chat failed:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
