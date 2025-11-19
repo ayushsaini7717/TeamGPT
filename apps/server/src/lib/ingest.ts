@@ -3,6 +3,9 @@ import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { PineconeStore } from "@langchain/pinecone";
 import { Pinecone } from "@pinecone-database/pinecone";
 import { WebPDFLoader } from "@langchain/community/document_loaders/web/pdf";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 export async function processDocument(fileBuffer: Buffer, workspaceId: string) {
   const pinecone = new Pinecone({
@@ -32,11 +35,11 @@ export async function processDocument(fileBuffer: Buffer, workspaceId: string) {
 
   console.log(`Split into ${splitDocs.length} chunks.`);
 
-  const index = pinecone.Index(process.env.PINECONE_INDEX!);
+  const index = pinecone.Index(process.env.PINECONE_INDEX_NAME!);
   
   const embeddings = new GoogleGenerativeAIEmbeddings({
     model: "text-embedding-004", 
-    apiKey: process.env.GOOGLE_API_KEY
+    apiKey: process.env.GEMINI_API_KEY
   });
 
   await PineconeStore.fromDocuments(splitDocs, embeddings, {
