@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "outDir": "dist",
+
+    // These 3 must be disabled for ts-node to work with ESM:
+    "verbatimModuleSyntax": false,
+    "isolatedModules": false,
+    "moduleDetection": "auto"
+  },
+  "ts-node": {
+    "esm": true
+  },
+  "paths": {
+  "@lib/*": ["src/lib/*"]
+}
+}
