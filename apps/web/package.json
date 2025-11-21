@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@liveblocks/client": "^3.10.1",
+    "@liveblocks/node": "^3.10.1",
     "@liveblocks/react": "^3.10.1",
     "@liveblocks/react-ui": "^3.10.1",
     "@radix-ui/react-progress": "^1.1.8",

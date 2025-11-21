@@ -69,6 +69,10 @@ app.post("/api/chat", async (req, res) : Promise<any> => {
 });
 
 
+
+
+
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

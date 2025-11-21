@@ -25,7 +25,7 @@ export async function processDocument(fileBuffer: Buffer, workspaceId: string) {
     chunkSize: 1000,
     chunkOverlap: 200,
   });
-
+  //@ts-ignore
   const docsWithMetadata = rawDocs.map(doc => {
     doc.metadata = { ...doc.metadata, workspaceId: workspaceId };
     return doc;
