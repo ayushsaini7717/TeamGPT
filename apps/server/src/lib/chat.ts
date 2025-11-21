@@ -1,6 +1,10 @@
 import { Pinecone } from "@pinecone-database/pinecone";
 import { ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
-import { PineconeStore } from "@langchain/pinecone";
+// import { PineconeStore } from "@langchain/pinecone";
+// import { Pinecone } from "@pinecone-database/pinecone";
+//@ts-ignore
+import { PineconeStore } from "@langchain/community/vectorstores/pinecone";
+
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 
@@ -78,6 +82,7 @@ export async function chatWithDocument(query: string, workspaceId: string, histo
   });
 
   const results = await vectorStore.similaritySearch(optimizedQuery, 4);
+  //@ts-ignore
   const context = results.map((r) => r.pageContent).join("\n\n");
 
   console.log("Found Context size:", context.length);

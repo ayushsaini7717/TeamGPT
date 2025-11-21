@@ -1,7 +1,9 @@
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
-import { PineconeStore } from "@langchain/pinecone";
 import { Pinecone } from "@pinecone-database/pinecone";
+//@ts-ignore
+import { PineconeStore } from "@langchain/community/vectorstores/pinecone";
+// import { Pinecone } from "@pinecone-database/pinecone";
 import { WebPDFLoader } from "@langchain/community/document_loaders/web/pdf";
 import dotenv from "dotenv";
 
