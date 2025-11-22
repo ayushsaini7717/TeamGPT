@@ -43,7 +43,6 @@ export async function processDocument(fileBuffer: Buffer, workspaceId: string) {
     model: "text-embedding-004", 
     apiKey: process.env.GEMINI_API_KEY
   });
-
   await PineconeStore.fromDocuments(splitDocs, embeddings, {
     pineconeIndex: index,
     namespace: workspaceId, 

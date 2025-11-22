@@ -113,6 +113,44 @@ app.post("/api/chat", requireAuth, async (req, res) : Promise<any> => {
   }
 });
 
+app.get("/api/workspaces", requireAuth, async (req, res) : Promise<any> => {
+  const { userId } = req.auth;
+  try {
+    const workspaces = await prisma.workspace.findMany({
+      where: {
+        members: {
+          some: { userId }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(workspaces);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch workspaces" });
+  }
+});
+
+
+app.post("/api/workspaces", requireAuth, async (req, res) : Promise<any> => {
+  const { userId } = req.auth;
+  const { name } = req.body;
+
+  try {
+    const workspace = await prisma.workspace.create({
+      data: {
+        name,
+        members: {
+          create: { userId, role: "ADMIN" } 
+        }
+      }
+    });
+    res.json(workspace);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to create workspace" });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
