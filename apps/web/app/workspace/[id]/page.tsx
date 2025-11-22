@@ -5,6 +5,7 @@ import UploadModal from "@/components/upload-modal";
 import ChatInterface from "@/components/chat-interface";
 import { UserButton } from "@clerk/nextjs";
 import { RoomProvider } from "@/liveblocks.config";
+import DocumentList from "@/components/document-list";
 
 export default function WorkspacePage() {
   // ✅ Get ID from URL (e.g. /workspace/123 -> 123)
@@ -23,6 +24,7 @@ export default function WorkspacePage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full max-w-6xl">
           <div className="lg:col-span-1">
             <UploadModal workspaceId={workspaceId} />
+            <DocumentList workspaceId={workspaceId} />
           </div>
           <div className="lg:col-span-2">
             <ChatInterface workspaceId={workspaceId} />

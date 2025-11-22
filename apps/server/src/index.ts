@@ -49,7 +49,7 @@ app.post("/api/ingest", upload.single("file"), async (req, res) : Promise<any> =
     const { workspaceId } = req.body;
     if (!file || !workspaceId) return res.status(400).json({ error: "No file" });
 
-    await processDocument(file.buffer, workspaceId);
+    await processDocument(file.buffer, workspaceId,file.originalname, prisma);
     res.json({ success: true });
   } catch (e) {
     console.error(e);
@@ -149,6 +149,15 @@ app.post("/api/workspaces", requireAuth, async (req, res) : Promise<any> => {
     console.error(error);
     res.status(500).json({ error: "Failed to create workspace" });
   }
+});
+
+app.get("/api/workspaces/:workspaceId/documents", requireAuth, async (req, res) : Promise<any> => {
+  const { workspaceId } = req.params;
+  const docs = await prisma.document.findMany({
+    where: { workspaceId },
+    orderBy: { createdAt: 'desc' }
+  });
+  res.json(docs);
 });
 
 app.listen(PORT, () => {

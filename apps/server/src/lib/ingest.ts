@@ -6,10 +6,11 @@ import { PineconeStore } from "@langchain/community/vectorstores/pinecone";
 // import { Pinecone } from "@pinecone-database/pinecone";
 import { WebPDFLoader } from "@langchain/community/document_loaders/web/pdf";
 import dotenv from "dotenv";
+import { PrismaClient } from "@prisma/client";
 
 dotenv.config();
 
-export async function processDocument(fileBuffer: Buffer, workspaceId: string) {
+export async function processDocument(fileBuffer: Buffer, workspaceId: string,filename: string,prisma: PrismaClient) {
   const pinecone = new Pinecone({
     apiKey: process.env.PINECONE_API_KEY!,
   });
@@ -46,6 +47,14 @@ export async function processDocument(fileBuffer: Buffer, workspaceId: string) {
   await PineconeStore.fromDocuments(splitDocs, embeddings, {
     pineconeIndex: index,
     namespace: workspaceId, 
+  });
+
+  await prisma.document.create({
+    data: {
+      name: filename,
+      workspaceId: workspaceId,
+      url: "local", 
+    }
   });
 
   console.log("Storage Complete via Gemini!");
