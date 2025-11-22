@@ -5,6 +5,8 @@ import ChatInterface from "@/components/chat-interface";
 import Collaborators from "@/components/collaborators";
 import LiveCursors from "@/components/cursor/live-cursors"; 
 import { RoomProvider, useMyPresence } from "@/liveblocks.config";
+import { UserButton, SignedIn, SignedOut } from "@clerk/nextjs";
+import DbSync from "@/components/db-sync";
 
 export default function Home() {
   const WORKSPACE_ID = "workspace-test-1";
@@ -16,21 +18,15 @@ export default function Home() {
       //@ts-ignore
       initialStorage={() => ({})}
     >
-      {/* We isolate the tracking logic in a wrapper component to use the hook */}
       <WorkspaceContent workspaceId={WORKSPACE_ID} />
     </RoomProvider>
   );
 }
 
-// ✅ Create a sub-component so we can use 'useMyPresence' inside RoomProvider
 function WorkspaceContent({ workspaceId }: { workspaceId: string }) {
   const [myPresence, updateMyPresence] = useMyPresence();
 
-  // 🖱️ Track mouse movement across the entire window
   const handlePointerMove = (e: React.PointerEvent) => {
-    // Subtracting window scroll if you have scrolling, 
-    // but for fixed screen e.clientX is fine.
-    // To be precise relative to the page:
     updateMyPresence({
       cursor: { 
         x: Math.round(e.pageX), 
@@ -49,7 +45,30 @@ function WorkspaceContent({ workspaceId }: { workspaceId: string }) {
       onPointerLeave={handlePointerLeave}
       className="relative flex min-h-screen flex-col items-center p-12 bg-gray-50 overflow-hidden"
     >
-      {/* 🖱️ The Live Cursors Layer */}
+      <DbSync />
+      {/* 🔐 Auth Buttons */}
+      <div className="absolute top-4 right-4 flex gap-3">
+        <SignedIn>
+          <UserButton afterSignOutUrl="/" />
+        </SignedIn>
+
+        <SignedOut>
+          <a
+            href="/sign-in"
+            className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium shadow hover:bg-blue-700 transition"
+          >
+            Sign In
+          </a>
+          <a
+            href="/sign-up"
+            className="px-4 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium shadow hover:bg-gray-300 transition"
+          >
+            Sign Up
+          </a>
+        </SignedOut>
+      </div>
+
+      {/* 🖱️ Live cursors */}
       <LiveCursors />
 
       <div className="w-full max-w-6xl flex justify-between items-center mb-8 z-10">
@@ -59,7 +78,7 @@ function WorkspaceContent({ workspaceId }: { workspaceId: string }) {
         </div>
         <Collaborators />
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full max-w-6xl z-10">
         <div className="lg:col-span-1">
           <UploadModal workspaceId={workspaceId} />

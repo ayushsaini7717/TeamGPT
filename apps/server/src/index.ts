@@ -4,8 +4,19 @@ import dotenv from "dotenv";
 import multer from "multer";
 import { processDocument } from "./lib/ingest";
 import { runAgent } from "./lib/agent";
+import { requireAuth } from "./lib/auth";
+import { StrictAuthProp } from '@clerk/clerk-sdk-node';
+import { PrismaClient } from "@prisma/client";
 
 dotenv.config();
+
+declare global {
+  namespace Express {
+    interface Request extends StrictAuthProp {}
+  }
+}
+
+const prisma = new PrismaClient();
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -13,6 +24,23 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(cors());
 app.use(express.json());
+
+app.post("/api/auth/sync", requireAuth, async (req, res) : Promise<any> => {
+  const { userId } = req.auth;
+  const { email, name } = req.body;
+
+  try {
+    const user = await prisma.user.upsert({
+      where: { id: userId }, 
+      update: { email, name },
+      create: { id: userId, email, name },
+    });
+    res.json({ success: true, user });
+  } catch (error) {
+    console.error("Sync failed:", error);
+    res.status(500).json({ error: "Sync failed" });
+  }
+});
 
 // Ingest Route
 app.post("/api/ingest", upload.single("file"), async (req, res) : Promise<any> => {
@@ -47,5 +75,5 @@ app.post("/api/chat", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });

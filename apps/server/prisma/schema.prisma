@@ -1,3 +1,9 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,19 +14,23 @@ datasource db {
 }
 
 model User {
-  id        String      @id @default(uuid())
+  id        String      @id
   email     String      @unique
   name      String?
   createdAt DateTime    @default(now())
+
   workspaces WorkspaceMember[]
+  messages   Message[]        
 }
 
 model Workspace {
   id        String      @id @default(uuid())
   name      String
   createdAt DateTime    @default(now())
+  
   members   WorkspaceMember[]
   documents Document[]
+  messages  Message[]       
 }
 
 model WorkspaceMember {
@@ -28,10 +38,11 @@ model WorkspaceMember {
   role        String    @default("MEMBER") // ADMIN, MEMBER
   userId      String
   workspaceId String
+  
   user        User      @relation(fields: [userId], references: [id])
   workspace   Workspace @relation(fields: [workspaceId], references: [id])
 
-  @@unique([userId, workspaceId]) // A user can't join the same workspace twice
+  @@unique([userId, workspaceId])
 }
 
 model Document {
@@ -41,4 +52,16 @@ model Document {
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id])
   createdAt   DateTime @default(now())
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  content     String   @db.Text 
+  role        String
+  createdAt   DateTime @default(now())
+  
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)  
+  userId      String?
+  user        User?   @relation(fields: [userId], references: [id])
 }
