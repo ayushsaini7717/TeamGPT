@@ -4,7 +4,6 @@ import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 // @ts-ignore
 import { PineconeStore } from "@langchain/community/vectorstores/pinecone";
 
-
 export async function webSearchTool(query: string) {
   try {
     console.log("Tavily Web Search:", query);
@@ -31,7 +30,6 @@ export async function webSearchTool(query: string) {
   }
 }
 
-
 export function createVectorTool(workspaceId: string) {
   return async function vectorTool(query: string) {
     try {
@@ -55,10 +53,20 @@ export function createVectorTool(workspaceId: string) {
 
       const results = await vectorStore.similaritySearch(query, 4);
 
+      const normalized = results.map((doc: any, idx: number) => ({
+        id: doc.metadata?.sourceId ?? `${idx}`,
+        text: doc.pageContent,
+        source: doc.metadata?.source ?? "unknown",
+        sourceId: doc.metadata?.sourceId ?? null,
+        chunkIndex: doc.metadata?.chunkIndex ?? null,
+        originalPage: doc.metadata?.originalPage ?? null,
+        metadata: doc.metadata ?? {},
+      }));
+
       return {
         type: "vector_search_result",
         query,
-        results,
+        results: normalized,
       };
     } catch (err: any) {
       console.error("Vector Search Error:", err);

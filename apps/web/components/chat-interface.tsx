@@ -4,13 +4,35 @@ import { useState, useEffect, useRef } from "react";
 import { Send, Bot, User, Loader2, Sparkles, FileText, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "@clerk/nextjs"; 
+import { useAuth } from "@clerk/nextjs";
 import ReactMarkdown from "react-markdown";
 
 type Message = {
   role: "user" | "ai";
   content: string;
 };
+
+function extractCitations(text: string) {
+  const citationRegex = /\[(Source|Sources):([^\]]+)\]/g;
+  const collected: string[] = [];
+  let cleaned = text;
+
+  let match;
+  while ((match = citationRegex.exec(text)) !== null) {
+    const items = match[2]
+      .split(/[;,]/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+
+    collected.push(...items);
+    cleaned = cleaned.replace(match[0], "");
+  }
+
+  const unique = [...new Set(collected)];
+
+  return { cleanedText: cleaned.trim(), citations: unique };
+}
+
 
 export default function ChatInterface({ workspaceId }: { workspaceId: string }) {
   const { getToken } = useAuth();
@@ -24,7 +46,7 @@ export default function ChatInterface({ workspaceId }: { workspaceId: string }) 
       try {
         const token = await getToken();
         const res = await fetch(`http://localhost:8000/api/messages/${workspaceId}`, {
-          headers: { Authorization: `Bearer ${token}` } 
+          headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
         if (Array.isArray(data)) {
@@ -46,20 +68,19 @@ export default function ChatInterface({ workspaceId }: { workspaceId: string }) 
 
     const userMessage = input;
     setInput("");
-    
-    // Optimistic Update
+
     setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
     setMessages((prev) => [...prev, { role: "ai", content: "Thinking..." }]);
     setIsLoading(true);
 
     try {
-      const token = await getToken(); 
-      
+      const token = await getToken();
+
       const response = await fetch("http://localhost:8000/api/chat", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}` 
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({ message: userMessage, workspaceId }),
       });
@@ -110,14 +131,14 @@ export default function ChatInterface({ workspaceId }: { workspaceId: string }) 
                 <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
               </div>
             </div>
-            
+
             <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-1.5 sm:mb-2">
               AI-Powered Document Assistant
             </h3>
             <p className="text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6 text-center max-w-md px-4">
               Ask questions about your documents and get intelligent answers powered by RAG technology
             </p>
-            
+
             <div className="space-y-2 w-full max-w-md px-4">
               <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 sm:mb-3 flex items-center gap-1.5">
                 <Zap size={11} className="text-amber-500" />
@@ -138,18 +159,17 @@ export default function ChatInterface({ workspaceId }: { workspaceId: string }) 
             </div>
           </div>
         )}
-        
+
         {messages.map((msg, i) => (
-          <div 
-            key={i} 
+          <div
+            key={i}
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-fadeIn`}
           >
             <div className={`flex gap-2 sm:gap-3 max-w-[90%] sm:max-w-[85%] ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
-              <div className={`flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shadow-md ${
-                msg.role === "user" 
-                  ? "bg-gradient-to-br from-blue-500 to-indigo-600" 
+              <div className={`flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shadow-md ${msg.role === "user"
+                  ? "bg-gradient-to-br from-blue-500 to-indigo-600"
                   : "bg-gradient-to-br from-violet-500 to-purple-600"
-              }`}>
+                }`}>
                 {msg.role === "user" ? (
                   <User size={14} className="text-white sm:w-4 sm:h-4" />
                 ) : (
@@ -158,31 +178,59 @@ export default function ChatInterface({ workspaceId }: { workspaceId: string }) 
               </div>
 
               <div className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
-                <div className={`px-3 py-2 sm:px-4 sm:py-3 rounded-xl sm:rounded-2xl shadow-sm ${
-                  msg.role === "user" 
-                    ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-tr-sm" 
+                <div className={`px-3 py-2 sm:px-4 sm:py-3 rounded-xl sm:rounded-2xl shadow-sm ${msg.role === "user"
+                    ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-tr-sm"
                     : "bg-white border border-gray-200 text-gray-800 rounded-tl-sm"
-                }`}>
+                  }`}>
                   <div className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide mb-1 sm:mb-1.5 opacity-70">
                     {msg.role === "user" ? "You" : "AI Assistant"}
                   </div>
-                  
+
                   <div className="text-xs sm:text-sm leading-relaxed">
                     {msg.content === "Thinking..." && isLoading ? (
                       <span className="flex items-center gap-2 text-gray-500 italic">
-                        <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> 
+                        <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                         <span className="animate-pulse text-xs">Analyzing documents...</span>
                       </span>
                     ) : (
-                      <div className={`prose prose-xs sm:prose-sm max-w-none break-words ${
-                        msg.role === "user" ? "prose-invert" : ""
-                      }`}>
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      <div className={`prose prose-xs sm:prose-sm max-w-none break-words ${msg.role === "user" ? "prose-invert" : ""
+                        }`}>
+                        {/* <ReactMarkdown>{msg.content}</ReactMarkdown> */}
+                        {(() => {
+                          if (msg.role === "ai") {
+                            const { cleanedText, citations } = extractCitations(msg.content);
+
+                            return (
+                              <div className="flex flex-col gap-2">
+                                <ReactMarkdown>{cleanedText}</ReactMarkdown>
+
+                                {citations.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-1">
+
+                                    {citations.map((src, idx) => (
+                                      <span
+                                        key={idx}
+                                        className="text-[10px] px-2 py-1 rounded-md bg-purple-100 text-purple-700 border border-purple-200"
+                                      >
+                                        📄 {src}
+                                      </span>
+                                    ))}
+
+                                  </div>
+                                )}
+
+                              </div>
+                            );
+                          }
+
+                          return <ReactMarkdown>{msg.content}</ReactMarkdown>;
+                        })()}
+
                       </div>
                     )}
                   </div>
                 </div>
-                
+
                 <span className="text-[9px] sm:text-[10px] text-gray-400 mt-0.5 sm:mt-1 px-1">
                   {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
@@ -197,12 +245,12 @@ export default function ChatInterface({ workspaceId }: { workspaceId: string }) 
         <div className="p-2.5 sm:p-3">
           <div className="flex gap-2 items-end">
             <div className="flex-1 relative">
-              <Input 
-                value={input} 
+              <Input
+                value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask anything about your documents..." 
-                disabled={isLoading} 
+                placeholder="Ask anything about your documents..."
+                disabled={isLoading}
                 className="bg-white border-gray-300 focus:border-violet-400 focus:ring-violet-400 rounded-lg sm:rounded-xl pr-10 sm:pr-12 py-2 sm:py-2.5 text-xs sm:text-sm shadow-sm transition-all resize-none"
               />
               {input.length > 0 && (
@@ -211,8 +259,8 @@ export default function ChatInterface({ workspaceId }: { workspaceId: string }) 
                 </div>
               )}
             </div>
-            
-            <Button 
+
+            <Button
               onClick={handleSubmit}
               disabled={isLoading || !input.trim()}
               className="h-9 sm:h-10 w-9 sm:w-10 p-0 rounded-lg sm:rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
@@ -224,7 +272,7 @@ export default function ChatInterface({ workspaceId }: { workspaceId: string }) 
               )}
             </Button>
           </div>
-          
+
           <div className="flex items-center justify-between mt-2 px-0.5">
             <p className="text-[10px] sm:text-[11px] text-gray-400 flex items-center gap-1">
               <Sparkles size={10} className="text-violet-400 sm:w-3 sm:h-3" />
