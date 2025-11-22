@@ -1,6 +1,5 @@
 "use client";
 
-// ✅ Import from your config to share the same Room context
 import { useOthers } from "@/liveblocks.config";
 
 function stringToColor(str: string) {
@@ -21,12 +20,10 @@ export default function Collaborators() {
         ● LIVE
       </span>
 
-      {/* Me (Optional: You can remove this if you only want to see others) */}
       <div className="relative w-8 h-8 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center text-gray-600 text-xs font-bold z-30 ring-1 ring-gray-200">
         Me
       </div>
 
-      {/* Other Users */}
       {others.map(({ connectionId, info }) => (
         <div
           key={connectionId}
