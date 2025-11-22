@@ -57,20 +57,59 @@ app.post("/api/ingest", upload.single("file"), async (req, res) : Promise<any> =
   }
 });
 
+app.get("/api/messages/:workspaceId", requireAuth, async (req, res) : Promise<any> => {
+  try {
+    const { workspaceId } = req.params;
+    
+    // Fetch last 50 messages for this workspace
+    const messages = await prisma.message.findMany({
+      where: { workspaceId },
+      orderBy: { createdAt: "asc" }, // Oldest first for chat UI
+      take: 50 
+    });
+    
+    res.json(messages);
+  } catch (error) {
+    console.error("History fetch failed:", error);
+    res.status(500).json({ error: "Failed to fetch history" });
+  }
+});
+
 // Agent Chat Route
-app.post("/api/chat", async (req, res) => {
+
+app.post("/api/chat", requireAuth, async (req, res) : Promise<any> => {
+  const { userId } = req.auth;
   const { message, workspaceId } = req.body;
 
-  if (!message) {
-    return res.status(400).json({ reply: "No message received." });
-  }
+  if (!message || !workspaceId) return res.status(400).json({ error: "Missing data" });
 
   try {
-    const reply = await runAgent(message, workspaceId);
-    return res.json({ reply });
-  } catch (err) {
-    console.error("Chat Route Error:", err);
-    return res.json({ reply: "Server error." });
+    await prisma.message.create({
+      data: {
+        content: message,
+        role: "user",
+        workspaceId,
+        userId: userId,
+      }
+    });
+
+    console.log(`Agent received task: ${message}`);
+
+    const agentResponse = await runAgent(message, workspaceId);
+    
+    await prisma.message.create({
+      data: {
+        content: agentResponse,
+        role: "ai",
+        workspaceId,
+      }
+    });
+
+    res.json({ response: agentResponse });
+
+  } catch (error) {
+    console.error("Agent failed:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
