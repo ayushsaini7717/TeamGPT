@@ -160,6 +160,31 @@ app.get("/api/workspaces/:workspaceId/documents", requireAuth, async (req, res) 
   res.json(docs);
 });
 
+app.get("/api/workspaces/:id", requireAuth, async (req, res) : Promise<any> => {
+  const { id } = req.params;
+  const { userId } = req.auth;
+
+  try {
+    const workspace = await prisma.workspace.findFirst({
+      where: {
+        id: id,
+        members: {
+          some: { userId }
+        }
+      },
+      select: { name: true } 
+    });
+
+    if (!workspace) {
+      return res.status(404).json({ error: "Workspace not found or access denied" });
+    }
+
+    res.json(workspace);
+  } catch (error) {
+    res.status(500).json({ error: "Server Error" });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
